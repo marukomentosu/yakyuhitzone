@@ -3,242 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spray Chart Pro - Multi Device</title>
+    <title>Elite Scout - Speed | htmlマン</title>
     <style>
-        :root { --primary: #ff4757; --accent: #2ed573; --dark: #1e272e; }
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { 
-            background-color: var(--dark); 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            min-height: 100vh;
-        }
-        .app-container { 
-            width: 100%;
-            max-width: 1000px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        @media (min-width: 800px) {
-            .app-container { flex-direction: row; align-items: flex-start; }
-        }
-        .canvas-area { 
-            flex: 2;
-            position: relative;
-            background: #2d3436;
-            padding: 10px;
-            border-radius: 15px;
-            text-align: center;
-        }
-        canvas { 
-            width: 100%; 
-            height: auto; 
-            max-width: 600px;
-            border-radius: 10px; 
-            cursor: crosshair; 
-            background-color: #1e4d2b; 
-        }
-        .side-panel { 
-            flex: 1;
-            background: rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 15px; 
-        }
-        .controls { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 100%; font-size: 16px; }
-        .player-list { 
-            margin-top: 15px; 
-            max-height: 150px; 
-            overflow-y: auto; 
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-        }
-        .player-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #444; }
-        .active-player { background: var(--accent) !important; color: black; font-weight: bold; border-radius: 8px; }
-        
-        .btn { padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-add { background: var(--accent); color: black; }
-        .btn-reset { background: var(--primary); color: white; }
-        .btn-save { background: #3498db; color: white; }
+        :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --success: #2b9348; --undo: #f39c12; --danger: #d90429; --share: #00b900; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
+        body { margin: 0; padding: 4px; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
 
-        .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
-        .switch { position: relative; width: 50px; height: 26px; }
+        .header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 4px; }
+        .header h1 { font-size: 0.8rem; margin: 0; }
+        .btn-settings { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+
+        .main-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 4px; }
+
+        /* ゾーン */
+        .map-area { flex: 1.4; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
+        #canvas-wrap { position: relative; height: 98%; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; touch-action: none; }
+        #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.4); pointer-events: none; }
+        canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 1.5px solid #fff; pointer-events: none; z-index: 5; }
+
+        /* 操作パネル */
+        .ctrl-panel { flex: 0 0 auto; background: #fff; padding: 6px; border-radius: 10px; }
+        
+        /* 復活した球速スライダー */
+        .speed-row { display: none; align-items: center; gap: 8px; margin-bottom: 8px; background: #f8f9fa; padding: 8px; border-radius: 8px; }
+        .speed-txt { font-size: 1rem; font-weight: bold; color: var(--accent); min-width: 85px; }
+        #sp-sld { flex: 1; height: 25px; }
+
+        /* 3x3グリッド固定 */
+        .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .p-btn { width: 100%; aspect-ratio: 1.8/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
+        .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .p-btn.hidden { visibility: hidden; pointer-events: none; }
+        .p-btn span { font-size: 0.5rem; margin-top: 1px; }
+
+        .action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 6px; margin-top: 6px; }
+        .btn-main { padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.9rem; }
+        .b-undo { background: var(--undo); }
+        .b-rep { background: var(--success); }
+
+        /* 履歴（モノクロ） */
+        .history-list { flex: 0.7; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 2px; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
+        .h-table th { background: #eee; position: sticky; top: 0; padding: 4px; font-size: 0.7rem; }
+        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 5px; }
+
+        /* モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 10px; }
+        .modal-content { background: #fff; width: 95%; max-width: 380px; padding: 15px; border-radius: 12px; max-height: 92vh; overflow-y: auto; }
+        
+        .pitch-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
+        .pitch-table th { text-align: left; color: #666; padding-bottom: 5px; }
+        .pitch-table td { padding: 6px 0; border-bottom: 1px solid #eee; }
+        
+        .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; margin: 4px 0; }
+        .switch { position: relative; width: 40px; height: 20px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--accent); }
-        input:checked + .slider:before { transform: translateX(24px); }
+        .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 20px; cursor: pointer; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="canvas-area">
-        <h3 id="current-player-display" style="margin:5px 0 10px 0; color:var(--accent)">選手を登録</h3>
-        <canvas id="field" width="600" height="600"></canvas>
+    <div class="header">
+        <h1 id="title-label">投手A vs 打者A</h1>
+        <button class="btn-settings" onclick="openModal('settings-modal')">⚙️ 設定</button>
     </div>
 
-    <div class="side-panel">
-        <h3 style="margin-top:0">管理パネル</h3>
-        <input type="text" id="playerName" placeholder="選手名を入力">
-        <div class="controls">
-            <button class="btn btn-add" onclick="addPlayer()">選手を追加</button>
+    <div class="main-layout">
+        <div class="map-area">
+            <div id="canvas-wrap">
+                <canvas id="h-layer" width="300" height="360"></canvas>
+                <div id="s-zone"></div>
+            </div>
         </div>
-        <div class="player-list" id="playerList"></div>
+        
+        <div class="ctrl-panel">
+            <div id="sp-area" class="speed-row">
+                <span id="sp-val" class="speed-txt">140 km/h</span>
+                <input type="range" id="sp-sld" min="80" max="170" value="140" oninput="document.getElementById('sp-val').innerText=this.value+' km/h'">
+            </div>
 
-        <hr style="border:0.5px solid #555; margin:20px 0;">
-
-        <div class="switch-container">
-            <span>軌道線を表示</span>
-            <label class="switch">
-                <input type="checkbox" id="lineToggle" checked onchange="render()">
-                <span class="slider"></span>
-            </label>
+            <div class="compass" id="comp"></div>
+            
+            <div class="action-row">
+                <button class="btn-main b-undo" onclick="undo()">取り消し</button>
+                <button class="btn-main b-rep" onclick="generateReport()">レポート作成・共有</button>
+            </div>
         </div>
-        <div class="controls">
-            <button class="btn btn-reset" onclick="clearCurrentPlayerData()">データリセット</button>
-            <button class="btn btn-save" onclick="saveImage()">画像を保存</button>
+        
+        <div class="history-list">
+            <table class="h-table">
+                <thead><tr><th>#</th><th>球種</th><th>球速</th></tr></thead>
+                <tbody id="h-body"></tbody>
+            </table>
         </div>
     </div>
-</div>
 
-<script>
-const canvas = document.getElementById('field');
-const ctx = canvas.getContext('2d');
-const lineToggle = document.getElementById('lineToggle');
-const playerListEl = document.getElementById('playerList');
-const playerDisplay = document.getElementById('current-player-display');
+    <div id="settings-modal" class="modal" onclick="closeModal(event, 'settings-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin: 0 0 10px 0">⚙️ 試合設定</h3>
+            <div class="m-row">
+                <input type="text" id="p-name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:4px;" value="投手A" onchange="syncUI()" placeholder="投手名">
+                <div class="sw-group"><span>右投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="syncUI()"><span class="slider"></span></label><span>左投</span></div>
+                <input type="text" id="b-name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin:4px 0;" value="打者A" onchange="syncUI()" placeholder="打者名">
+                <div class="sw-group"><span>右打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncUI()"><span class="slider"></span></label><span>左打</span></div>
+            </div>
 
-let players = {}; 
-let currentPlayer = null;
-const W = 600, H = 600;
-const HOME_X = 300, HOME_Y = 540;
+            <div class="sw-group" style="background:#fff9c4; border:1px solid #fbc02d;">
+                <span>球速入力を表示</span>
+                <label class="switch"><input type="checkbox" id="sp-on" onchange="syncUI()"><span class="slider"></span></label>
+            </div>
 
-function addPlayer() {
-    const name = document.getElementById('playerName').value.trim();
-    if (name && !players[name]) {
-        players[name] = [];
-        updatePlayerList();
-        selectPlayer(name);
-        document.getElementById('playerName').value = '';
-    }
-}
+            <div class="m-row">
+                <table class="pitch-table">
+                    <thead><tr><th>球種</th><th>ボタン</th><th>マップ</th></tr></thead>
+                    <tbody id="pitch-config-body"></tbody>
+                </table>
+            </div>
 
-function updatePlayerList() {
-    playerListEl.innerHTML = '';
-    for (let name in players) {
-        const div = document.createElement('div');
-        div.className = `player-item ${name === currentPlayer ? 'active-player' : ''}`;
-        div.innerText = name;
-        div.onclick = () => selectPlayer(name);
-        playerListEl.appendChild(div);
-    }
-}
+            <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main" style="width:100%; background:var(--primary); margin-top:10px;">完了</button>
+            <button onclick="resetAll()" style="width:100%; margin-top:12px; background:none; border:none; color:var(--danger); font-size:0.7rem;">全データをリセット</button>
+        </div>
+    </div>
 
-function selectPlayer(name) {
-    currentPlayer = name;
-    playerDisplay.innerText = `分析中: ${name}`;
-    updatePlayerList();
-    render();
-}
+    <div id="report-modal" class="modal" onclick="closeModal(event, 'report-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin:0">📸 レポート生成</h3>
+            <img id="report-img" style="width:100%; border:1px solid #ccc; border-radius:6px; margin:10px 0;">
+            <button class="btn-main" style="background:var(--share); width:100%" onclick="shareReport()">📤 共有する</button>
+            <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main" style="width:100%; margin-top:8px; background:#666;">閉じる</button>
+        </div>
+    </div>
 
-function drawStadium() {
-    // 芝生
-    ctx.fillStyle = '#2d5a27';
-    ctx.beginPath();
-    ctx.moveTo(HOME_X, HOME_Y);
-    ctx.arc(HOME_X, HOME_Y, 550, Math.PI * 1.1, Math.PI * 1.9);
-    ctx.fill();
+    <script>
+        let db=[], selT='直球', reportBlob=null;
+        const colors = {'直球':'#e74c3c','カーブ':'#3498db','スライダー':'#2ecc71','フォーク':'#f39c12','チェンジ':'#9b59b6','シュート':'#1abc9c','シンカー':'#d35400','カット':'#34495e','ライズ':'#f1c40f'};
+        const pitchLayout = [{a:'↖', r:'カット', l:'シュート'}, {a:'↑', r:'ライズ', l:'ライズ'}, {a:'↗', r:'シュート', l:'カット'},{a:'←', r:'スライダー', l:'シンカー'}, {a:'◯', r:'直球', l:'直球'}, {a:'→', r:'シンカー', l:'スライダー'},{a:'↙', r:'カーブ', l:'チェンジ'}, {a:'↓', r:'フォーク', l:'フォーク'}, {a:'↘', r:'チェンジ', l:'カーブ'}];
+        
+        let pitchConfig = {
+            '直球': {btn: true, map: true}, 'カーブ': {btn: true, map: true}, 'スライダー': {btn: true, map: true},
+            'フォーク': {btn: true, map: true}, 'チェンジ': {btn: true, map: true}, 'シュート': {btn: true, map: true},
+            'シンカー': {btn: true, map: true}, 'カット': {btn: true, map: true}, 'ライズ': {btn: true, map: true}
+        };
 
-    // 内野
-    ctx.fillStyle = '#b37e54';
-    ctx.beginPath();
-    ctx.moveTo(HOME_X, HOME_Y);
-    ctx.lineTo(HOME_X - 160, HOME_Y - 160);
-    ctx.quadraticCurveTo(HOME_X, HOME_Y - 240, HOME_X + 160, HOME_Y - 160);
-    ctx.fill();
-
-    // ライン
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(HOME_X, HOME_Y); ctx.lineTo(HOME_X - 420, HOME_Y - 420);
-    ctx.moveTo(HOME_X, HOME_Y); ctx.lineTo(HOME_X + 420, HOME_Y - 420);
-    ctx.stroke();
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(HOME_X - 8, HOME_Y - 8, 16, 16);
-}
-
-function render() {
-    ctx.clearRect(0, 0, W, H);
-    drawStadium();
-    if (!currentPlayer) return;
-
-    const showLines = lineToggle.checked;
-    players[currentPlayer].forEach(p => {
-        if (showLines) {
-            ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(HOME_X, HOME_Y);
-            ctx.lineTo(p.x, p.y);
-            ctx.stroke();
+        function initSettingsTable() {
+            const body = document.getElementById('pitch-config-body');
+            body.innerHTML = '';
+            Object.keys(pitchConfig).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p}</td>
+                    <td><input type="checkbox" ${pitchConfig[p].btn?'checked':''} onchange="pitchConfig['${p}'].btn=this.checked; syncUI();"></td>
+                    <td><input type="checkbox" ${pitchConfig[p].map?'checked':''} onchange="pitchConfig['${p}'].map=this.checked; syncUI();"></td>
+                `;
+                body.appendChild(tr);
+            });
         }
-        ctx.setLineDash([]);
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 25);
-        grad.addColorStop(0, `rgba(255, 69, 0, 0.8)`);
-        grad.addColorStop(1, `rgba(255, 69, 0, 0)`);
-        ctx.globalCompositeOperation = 'screen';
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 25, 0, Math.PI * 2); ctx.fill();
-    });
-    ctx.globalCompositeOperation = 'source-over';
-}
 
-function handleInput(e) {
-    if (!currentPlayer) return;
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    // キャンバスの表示サイズと内部解像度の比率を計算
-    const scaleX = W / rect.width;
-    const scaleY = H / rect.height;
-    
-    players[currentPlayer].push({
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-    });
-    render();
-}
+        function syncUI() {
+            const isL = document.getElementById('p-hand').checked;
+            document.getElementById('title-label').innerText = `${document.getElementById('p-name').value}(${isL?'L':'R'}) vs ${document.getElementById('b-name').value}(${document.getElementById('b-side').checked?'L':'R'})`;
+            
+            // 球速スライダーのON/OFF
+            document.getElementById('sp-area').style.display = document.getElementById('sp-on').checked ? 'flex' : 'none';
 
-canvas.addEventListener('mousedown', handleInput);
-canvas.addEventListener('touchstart', handleInput);
+            const comp = document.getElementById('comp'); 
+            comp.innerHTML = '';
+            pitchLayout.forEach(item => {
+                const label = isL ? item.l : item.r;
+                const btn = document.createElement('button');
+                btn.className = `p-btn ${selT === label ? 'active' : ''} ${!pitchConfig[label].btn ? 'hidden' : ''}`;
+                btn.innerHTML = `${item.a}<span>${label}</span>`;
+                btn.onclick = () => { selT = label; syncUI(); };
+                comp.appendChild(btn);
+            });
+            drawMap(); updateHistory();
+        }
 
-function clearCurrentPlayerData() {
-    if (currentPlayer && confirm('データをリセットしますか？')) {
-        players[currentPlayer] = [];
-        render();
-    }
-}
+        const wrap = document.getElementById('canvas-wrap');
+        function handleTouch(e) {
+            e.preventDefault();
+            const r=wrap.getBoundingClientRect(); 
+            const xVal = e.touches ? e.touches[0].clientX : e.clientX;
+            const yVal = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = Math.round(((xVal - r.left) / r.width) * 300);
+            const y = Math.round(((yVal - r.top) / r.height) * 360);
+            
+            // 球速を取得
+            const spVal = document.getElementById('sp-on').checked ? document.getElementById('sp-sld').value + " km/h" : "-";
+            db.push({t:selT, x:x, y:y, s:spVal});
+            drawMap(); updateHistory();
+        }
+        wrap.addEventListener('touchstart', handleTouch);
+        wrap.addEventListener('mousedown', handleTouch);
 
-function saveImage() {
-    if (!currentPlayer) return;
-    const link = document.createElement('a');
-    link.download = `${currentPlayer}_chart.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-}
+        function drawMap() {
+            const ctx = document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360);
+            document.querySelectorAll('.dot').forEach(m=>m.remove());
+            db.forEach(p => {
+                if (pitchConfig[p.t] && pitchConfig[p.t].map) {
+                    const m=document.createElement('div'); m.className='dot'; m.style.left=(p.x/300*100)+'%'; m.style.top=(p.y/360*100)+'%'; m.style.background=colors[p.t]; wrap.appendChild(m);
+                }
+            });
+        }
 
-drawStadium();
-</script>
+        function updateHistory() {
+            const body = document.getElementById('h-body');
+            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:10px;color:#999">タッチして記録</td></tr>' : '';
+            [...db].reverse().forEach((p, i) => {
+                const row = body.insertRow();
+                row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.s}</td>`;
+            });
+        }
+
+        function undo() { if(db.length > 0) { db.pop(); drawMap(); updateHistory(); } }
+
+        async function generateReport() {
+            if(db.length === 0) return;
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            canvas.width = 600; canvas.height = 800;
+            ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
+            ctx.fillStyle = "#0a2e5c"; ctx.fillRect(0,0,600,80);
+            ctx.fillStyle = "#fff"; ctx.font = "bold 24px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
+            ctx.save(); ctx.translate(30, 160); ctx.fillStyle = "#222"; ctx.fillRect(0,0,300,360);
+            ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.strokeRect(300*0.21, 360*0.22, 300*0.58, 360*0.56);
+            db.forEach(p => { if (pitchConfig[p.t].map) {
+                ctx.fillStyle = colors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); 
+            }}); ctx.restore();
+            ctx.fillStyle = "#000"; ctx.font = "bold 18px sans-serif"; ctx.fillText("【History】", 350, 180);
+            db.slice(-15).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t} (${p.s})`, 350, 210+(i*24)); });
+            document.getElementById('report-img').src = canvas.toDataURL();
+            canvas.toBlob(b => reportBlob = b);
+            openModal('report-modal');
+        }
+
+        async function shareReport() {
+            if (!reportBlob) return;
+            const file = new File([reportBlob], "report.png", { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: '投球レポート' });
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
+        function resetAll() { if(confirm("消去？")) { db = []; drawMap(); syncUI(); } }
+        
+        initSettingsTable();
+        syncUI();
+    </script>
 </body>
 </html>
