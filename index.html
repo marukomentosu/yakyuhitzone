@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Speed | htmlマン</title>
+    <title>Elite Scout - Fixed Speed | htmlマン</title>
     <style>
         :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --success: #2b9348; --undo: #f39c12; --danger: #d90429; --share: #00b900; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         body { margin: 0; padding: 4px; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
 
-        .header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 4px; }
-        .header h1 { font-size: 0.8rem; margin: 0; }
-        .btn-settings { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        /* ヘッダー */
+        .header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; z-index: 10; }
+        .header h1 { font-size: 0.9rem; margin: 0; font-weight: bold; }
+        .btn-settings { background: #fff; border: none; color: var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .main-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 4px; }
 
-        /* ゾーン */
+        /* ゾーン表示 */
         .map-area { flex: 1.4; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
         #canvas-wrap { position: relative; height: 98%; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; touch-action: none; }
         #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.4); pointer-events: none; }
@@ -23,53 +24,60 @@
         .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 1.5px solid #fff; pointer-events: none; z-index: 5; }
 
         /* 操作パネル */
-        .ctrl-panel { flex: 0 0 auto; background: #fff; padding: 6px; border-radius: 10px; }
+        .ctrl-panel { flex: 0 0 auto; background: #fff; padding: 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         
-        /* 復活した球速スライダー */
-        .speed-row { display: none; align-items: center; gap: 8px; margin-bottom: 8px; background: #f8f9fa; padding: 8px; border-radius: 8px; }
-        .speed-txt { font-size: 1rem; font-weight: bold; color: var(--accent); min-width: 85px; }
-        #sp-sld { flex: 1; height: 25px; }
+        /* 球速スライダー（ここが消えていたので確実に表示） */
+        .speed-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: #fff9c4; padding: 10px; border-radius: 8px; border: 1px solid #fbc02d; }
+        .speed-txt { font-size: 1.1rem; font-weight: bold; color: var(--accent); min-width: 90px; }
+        #sp-sld { flex: 1; height: 30px; cursor: pointer; }
 
-        /* 3x3グリッド固定 */
-        .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        /* 3x3ボタン */
+        .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
         .p-btn { width: 100%; aspect-ratio: 1.8/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
         .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .p-btn.hidden { visibility: hidden; pointer-events: none; }
-        .p-btn span { font-size: 0.5rem; margin-top: 1px; }
+        .p-btn span { font-size: 0.55rem; margin-top: 2px; }
 
-        .action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 6px; margin-top: 6px; }
-        .btn-main { padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.9rem; }
+        /* 下部アクション */
+        .action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 8px; }
+        .btn-main { padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 1rem; }
         .b-undo { background: var(--undo); }
         .b-rep { background: var(--success); }
 
         /* 履歴（モノクロ） */
-        .history-list { flex: 0.7; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 2px; }
-        .h-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
-        .h-table th { background: #eee; position: sticky; top: 0; padding: 4px; font-size: 0.7rem; }
-        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 5px; }
+        .history-list { flex: 0.7; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 4px; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
+        .h-table th { background: #eee; position: sticky; top: 0; padding: 6px; font-size: 0.7rem; }
+        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 8px; }
 
-        /* モーダル */
+        /* 設定モーダル（確実に見えるように！） */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 10px; }
-        .modal-content { background: #fff; width: 95%; max-width: 380px; padding: 15px; border-radius: 12px; max-height: 92vh; overflow-y: auto; }
+        .modal-content { background: #fff; width: 100%; max-width: 400px; padding: 20px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
         
-        .pitch-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
-        .pitch-table th { text-align: left; color: #666; padding-bottom: 5px; }
-        .pitch-table td { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .m-section { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .m-section h4 { margin: 0 0 10px 0; font-size: 0.9rem; color: var(--primary); }
+
+        .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 8px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 8px; }
         
-        .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; margin: 4px 0; }
-        .switch { position: relative; width: 40px; height: 20px; display: inline-block; }
+        /* トグルスイッチ */
+        .switch { position: relative; width: 44px; height: 22px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 20px; cursor: pointer; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 22px; cursor: pointer; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .pitch-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .pitch-table th { text-align: left; padding: 8px 0; color: #666; }
+        .pitch-table td { padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .pitch-table input[type="checkbox"] { width: 18px; height: 18px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 id="title-label">投手A vs 打者A</h1>
-        <button class="btn-settings" onclick="openModal('settings-modal')">⚙️ 設定</button>
+        <button class="btn-settings" onclick="openModal('settings-modal')">⚙️ 試合設定</button>
     </div>
 
     <div class="main-layout">
@@ -89,8 +97,8 @@
             <div class="compass" id="comp"></div>
             
             <div class="action-row">
-                <button class="btn-main b-undo" onclick="undo()">取り消し</button>
-                <button class="btn-main b-rep" onclick="generateReport()">レポート作成・共有</button>
+                <button class="btn-main b-undo" onclick="undo()">入力消去</button>
+                <button class="btn-main b-rep" onclick="generateReport()">レポート共有</button>
             </div>
         </div>
         
@@ -104,36 +112,43 @@
 
     <div id="settings-modal" class="modal" onclick="closeModal(event, 'settings-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin: 0 0 10px 0">⚙️ 試合設定</h3>
-            <div class="m-row">
-                <input type="text" id="p-name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:4px;" value="投手A" onchange="syncUI()" placeholder="投手名">
-                <div class="sw-group"><span>右投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="syncUI()"><span class="slider"></span></label><span>左投</span></div>
-                <input type="text" id="b-name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin:4px 0;" value="打者A" onchange="syncUI()" placeholder="打者名">
-                <div class="sw-group"><span>右打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncUI()"><span class="slider"></span></label><span>左打</span></div>
+            <h2 style="margin: 0 0 15px 0; font-size: 1.2rem;">⚙️ 記録設定</h2>
+
+            <div class="m-section" style="background: #fff9c4; padding: 10px; border-radius: 8px;">
+                <h4>▼ 球速入力の設定</h4>
+                <div class="sw-group">
+                    <span>メイン画面に球速スライダーを出す</span>
+                    <label class="switch"><input type="checkbox" id="sp-on" checked onchange="syncUI()"><span class="slider"></span></label>
+                </div>
             </div>
 
-            <div class="sw-group" style="background:#fff9c4; border:1px solid #fbc02d;">
-                <span>球速入力を表示</span>
-                <label class="switch"><input type="checkbox" id="sp-on" onchange="syncUI()"><span class="slider"></span></label>
+            <div class="m-section">
+                <h4>▼ 選手情報</h4>
+                <input type="text" id="p-name" class="sw-group" style="width:100%; border:1px solid #ddd; background:#fff;" value="投手A" onchange="syncUI()" placeholder="投手名">
+                <div class="sw-group"><span>右投 / 左投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="syncUI()"><span class="slider"></span></label></div>
+                
+                <input type="text" id="b-name" class="sw-group" style="width:100%; border:1px solid #ddd; background:#fff; margin-top:10px" value="打者A" onchange="syncUI()" placeholder="打者名">
+                <div class="sw-group"><span>右打 / 左打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncUI()"><span class="slider"></span></label></div>
             </div>
 
-            <div class="m-row">
+            <div class="m-section">
+                <h4>▼ 球種ボタン・表示設定</h4>
                 <table class="pitch-table">
                     <thead><tr><th>球種</th><th>ボタン</th><th>マップ</th></tr></thead>
                     <tbody id="pitch-config-body"></tbody>
                 </table>
             </div>
 
-            <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main" style="width:100%; background:var(--primary); margin-top:10px;">完了</button>
-            <button onclick="resetAll()" style="width:100%; margin-top:12px; background:none; border:none; color:var(--danger); font-size:0.7rem;">全データをリセット</button>
+            <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main" style="width:100%; background:var(--primary); margin-top:10px;">設定を閉じる</button>
+            <button onclick="resetAll()" style="width:100%; margin-top:20px; background:none; border:none; color:var(--danger); font-size:0.8rem; text-decoration: underline;">全記録をリセットする</button>
         </div>
     </div>
 
     <div id="report-modal" class="modal" onclick="closeModal(event, 'report-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin:0">📸 レポート生成</h3>
+            <h3 style="margin:0">📸 レポート完成</h3>
             <img id="report-img" style="width:100%; border:1px solid #ccc; border-radius:6px; margin:10px 0;">
-            <button class="btn-main" style="background:var(--share); width:100%" onclick="shareReport()">📤 共有する</button>
+            <button class="btn-main" style="background:var(--share); width:100%" onclick="shareReport()">📤 アプリで共有する</button>
             <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main" style="width:100%; margin-top:8px; background:#666;">閉じる</button>
         </div>
     </div>
@@ -165,9 +180,10 @@
 
         function syncUI() {
             const isL = document.getElementById('p-hand').checked;
-            document.getElementById('title-label').innerText = `${document.getElementById('p-name').value}(${isL?'L':'R'}) vs ${document.getElementById('b-name').value}(${document.getElementById('b-side').checked?'L':'R'})`;
+            const bL = document.getElementById('b-side').checked;
+            document.getElementById('title-label').innerText = `${document.getElementById('p-name').value}(${isL?'L':'R'}) vs ${document.getElementById('b-name').value}(${bL?'L':'R'})`;
             
-            // 球速スライダーのON/OFF
+            // 球速スライダー表示切り替え
             document.getElementById('sp-area').style.display = document.getElementById('sp-on').checked ? 'flex' : 'none';
 
             const comp = document.getElementById('comp'); 
@@ -191,8 +207,6 @@
             const yVal = e.touches ? e.touches[0].clientY : e.clientY;
             const x = Math.round(((xVal - r.left) / r.width) * 300);
             const y = Math.round(((yVal - r.top) / r.height) * 360);
-            
-            // 球速を取得
             const spVal = document.getElementById('sp-on').checked ? document.getElementById('sp-sld').value + " km/h" : "-";
             db.push({t:selT, x:x, y:y, s:spVal});
             drawMap(); updateHistory();
@@ -212,7 +226,7 @@
 
         function updateHistory() {
             const body = document.getElementById('h-body');
-            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:10px;color:#999">タッチして記録</td></tr>' : '';
+            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:15px;color:#999">ゾーンをタッチして記録</td></tr>' : '';
             [...db].reverse().forEach((p, i) => {
                 const row = body.insertRow();
                 row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.s}</td>`;
@@ -222,7 +236,7 @@
         function undo() { if(db.length > 0) { db.pop(); drawMap(); updateHistory(); } }
 
         async function generateReport() {
-            if(db.length === 0) return;
+            if(db.length === 0) return alert("記録がありません");
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 800;
             ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
@@ -250,7 +264,7 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
-        function resetAll() { if(confirm("消去？")) { db = []; drawMap(); syncUI(); } }
+        function resetAll() { if(confirm("全データを消去しますか？")) { db = []; drawMap(); syncUI(); } }
         
         initSettingsTable();
         syncUI();
