@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spray Chart Pro - Multi Device</title>
+    <style>
+        :root { --primary: #ff4757; --accent: #2ed573; --dark: #1e272e; }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { 
+            background-color: var(--dark); 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            min-height: 100vh;
+        }
+        .app-container { 
+            width: 100%;
+            max-width: 1000px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        @media (min-width: 800px) {
+            .app-container { flex-direction: row; align-items: flex-start; }
+        }
+        .canvas-area { 
+            flex: 2;
+            position: relative;
+            background: #2d3436;
+            padding: 10px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        canvas { 
+            width: 100%; 
+            height: auto; 
+            max-width: 600px;
+            border-radius: 10px; 
+            cursor: crosshair; 
+            background-color: #1e4d2b; 
+        }
+        .side-panel { 
+            flex: 1;
+            background: rgba(255,255,255,0.05); 
+            padding: 20px; 
+            border-radius: 15px; 
+        }
+        .controls { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        input { padding: 12px; border-radius: 8px; border: none; width: 100%; font-size: 16px; }
+        .player-list { 
+            margin-top: 15px; 
+            max-height: 150px; 
+            overflow-y: auto; 
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .player-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #444; }
+        .active-player { background: var(--accent) !important; color: black; font-weight: bold; border-radius: 8px; }
+        
+        .btn { padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-add { background: var(--accent); color: black; }
+        .btn-reset { background: var(--primary); color: white; }
+        .btn-save { background: #3498db; color: white; }
+
+        .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(24px); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="canvas-area">
+        <h3 id="current-player-display" style="margin:5px 0 10px 0; color:var(--accent)">選手を登録</h3>
+        <canvas id="field" width="600" height="600"></canvas>
+    </div>
+
+    <div class="side-panel">
+        <h3 style="margin-top:0">管理パネル</h3>
+        <input type="text" id="playerName" placeholder="選手名を入力">
+        <div class="controls">
+            <button class="btn btn-add" onclick="addPlayer()">選手を追加</button>
+        </div>
+        <div class="player-list" id="playerList"></div>
+
+        <hr style="border:0.5px solid #555; margin:20px 0;">
+
+        <div class="switch-container">
+            <span>軌道線を表示</span>
+            <label class="switch">
+                <input type="checkbox" id="lineToggle" checked onchange="render()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="controls">
+            <button class="btn btn-reset" onclick="clearCurrentPlayerData()">データリセット</button>
+            <button class="btn btn-save" onclick="saveImage()">画像を保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('field');
+const ctx = canvas.getContext('2d');
+const lineToggle = document.getElementById('lineToggle');
+const playerListEl = document.getElementById('playerList');
+const playerDisplay = document.getElementById('current-player-display');
+
+let players = {}; 
+let currentPlayer = null;
+const W = 600, H = 600;
+const HOME_X = 300, HOME_Y = 540;
+
+function addPlayer() {
+    const name = document.getElementById('playerName').value.trim();
+    if (name && !players[name]) {
+        players[name] = [];
+        updatePlayerList();
+        selectPlayer(name);
+        document.getElementById('playerName').value = '';
+    }
+}
+
+function updatePlayerList() {
+    playerListEl.innerHTML = '';
+    for (let name in players) {
+        const div = document.createElement('div');
+        div.className = `player-item ${name === currentPlayer ? 'active-player' : ''}`;
+        div.innerText = name;
+        div.onclick = () => selectPlayer(name);
+        playerListEl.appendChild(div);
+    }
+}
+
+function selectPlayer(name) {
+    currentPlayer = name;
+    playerDisplay.innerText = `分析中: ${name}`;
+    updatePlayerList();
+    render();
+}
+
+function drawStadium() {
+    // 芝生
+    ctx.fillStyle = '#2d5a27';
+    ctx.beginPath();
+    ctx.moveTo(HOME_X, HOME_Y);
+    ctx.arc(HOME_X, HOME_Y, 550, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.fill();
+
+    // 内野
+    ctx.fillStyle = '#b37e54';
+    ctx.beginPath();
+    ctx.moveTo(HOME_X, HOME_Y);
+    ctx.lineTo(HOME_X - 160, HOME_Y - 160);
+    ctx.quadraticCurveTo(HOME_X, HOME_Y - 240, HOME_X + 160, HOME_Y - 160);
+    ctx.fill();
+
+    // ライン
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(HOME_X, HOME_Y); ctx.lineTo(HOME_X - 420, HOME_Y - 420);
+    ctx.moveTo(HOME_X, HOME_Y); ctx.lineTo(HOME_X + 420, HOME_Y - 420);
+    ctx.stroke();
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(HOME_X - 8, HOME_Y - 8, 16, 16);
+}
+
+function render() {
+    ctx.clearRect(0, 0, W, H);
+    drawStadium();
+    if (!currentPlayer) return;
+
+    const showLines = lineToggle.checked;
+    players[currentPlayer].forEach(p => {
+        if (showLines) {
+            ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(HOME_X, HOME_Y);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 25);
+        grad.addColorStop(0, `rgba(255, 69, 0, 0.8)`);
+        grad.addColorStop(1, `rgba(255, 69, 0, 0)`);
+        ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 25, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+function handleInput(e) {
+    if (!currentPlayer) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // キャンバスの表示サイズと内部解像度の比率を計算
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    
+    players[currentPlayer].push({
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+    });
+    render();
+}
+
+canvas.addEventListener('mousedown', handleInput);
+canvas.addEventListener('touchstart', handleInput);
+
+function clearCurrentPlayerData() {
+    if (currentPlayer && confirm('データをリセットしますか？')) {
+        players[currentPlayer] = [];
+        render();
+    }
+}
+
+function saveImage() {
+    if (!currentPlayer) return;
+    const link = document.createElement('a');
+    link.download = `${currentPlayer}_chart.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+drawStadium();
+</script>
+</body>
+</html>
