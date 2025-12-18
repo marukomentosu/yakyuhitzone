@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Speed Master | htmlマン</title>
+    <title>Elite Scout - Pure | htmlマン</title>
     <style>
-        :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --undo: #f39c12; --success: #2b9348; --danger: #d90429; }
+        :root { --primary: #0a2e5c; --bg: #f0f2f5; --undo: #f39c12; --success: #2b9348; --danger: #d90429; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
         body { margin: 0; padding: 5px; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
 
@@ -17,7 +17,7 @@
         .main-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 5px; }
 
         /* ゾーンマップ */
-        .map-area { flex: 1.5; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
+        .map-area { flex: 1.8; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
         #canvas-wrap { position: relative; height: 100%; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; touch-action: none; }
         #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.4); pointer-events: none; }
         canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -26,39 +26,30 @@
         /* 操作パネル */
         .ctrl-panel { flex: 0 0 auto; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* 球速入力エリア（ここを強化） */
-        .speed-input-box { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; background: #fffde7; padding: 10px; border-radius: 8px; border: 2px solid #fbc02d; }
-        .speed-info { display: flex; justify-content: space-between; align-items: center; }
-        .speed-label { font-size: 0.8rem; font-weight: bold; color: #555; }
-        .speed-display { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
-        #sp-sld { width: 100%; height: 35px; margin: 5px 0; }
-
-        /* 球種ボタン（グリッド固定） */
+        /* 3x3ボタン：位置固定 */
         .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
         .p-btn { width: 100%; aspect-ratio: 1.8/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
         .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .p-btn.hidden { visibility: hidden; pointer-events: none; }
+        .p-btn.hidden { visibility: hidden; pointer-events: none; } /* 位置は保持して消える */
         .p-btn span { font-size: 0.55rem; margin-top: 2px; }
 
-        /* 下部ボタン */
+        /* アクション */
         .action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 10px; }
         .btn-main { padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 1rem; text-align: center; }
         .b-undo { background: var(--undo); }
         .b-rep { background: var(--success); }
 
-        /* 履歴（モノクロ・絶対色なし） */
-        .history-container { flex: 0.8; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; }
-        .h-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: center; }
+        /* 履歴：極シンプル */
+        .history-container { flex: 1; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; text-align: center; }
         .h-table th { background: #f0f0f0; position: sticky; top: 0; padding: 8px; font-size: 0.75rem; border-bottom: 2px solid #ddd; }
-        .h-table td { border-bottom: 1px solid #eee; padding: 10px; color: #333; }
+        .h-table td { border-bottom: 1px solid #eee; padding: 10px; }
 
         /* 設定モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
         .modal-content { background: #fff; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; max-height: 90vh; overflow-y: auto; }
-        .m-title { margin: 0 0 15px 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
         .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f5f5f5; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 0.9rem; }
         
-        /* スイッチデザイン */
         .switch { position: relative; width: 44px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
@@ -87,25 +78,16 @@
         </div>
         
         <div class="ctrl-panel">
-            <div id="sp-container" class="speed-input-box">
-                <div class="speed-info">
-                    <span class="speed-label">現在の球速設定:</span>
-                    <span id="sp-val" class="speed-display">140 km/h</span>
-                </div>
-                <input type="range" id="sp-sld" min="80" max="170" value="140" oninput="updateSpeedDisp(this.value)">
-            </div>
-
             <div class="compass" id="pitch-grid"></div>
-            
             <div class="action-row">
-                <button class="btn-main b-undo" onclick="undoLast()">1打消去</button>
-                <button class="btn-main b-rep" onclick="showReport()">レポート作成</button>
+                <button class="btn-main b-undo" onclick="undoLast()">1球取消</button>
+                <button class="btn-main b-rep" onclick="showReport()">レポート</button>
             </div>
         </div>
         
         <div class="history-container">
             <table class="h-table">
-                <thead><tr><th>#</th><th>球種</th><th>球速</th></tr></thead>
+                <thead><tr><th>#</th><th>球種</th></tr></thead>
                 <tbody id="h-body"></tbody>
             </table>
         </div>
@@ -113,22 +95,17 @@
 
     <div id="settings-modal" class="modal" onclick="closeModal(event, 'settings-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 class="m-title">⚙️ 記録設定</h2>
+            <h3 style="margin: 0 0 15px 0; border-bottom: 2px solid var(--primary);">⚙️ 試合設定</h3>
             
-            <div class="sw-group" style="background: #e3f2fd;">
-                <span>球速入力を有効にする</span>
-                <label class="switch"><input type="checkbox" id="sp-enable" checked onchange="toggleSpeedUI()"><span class="slider"></span></label>
-            </div>
-
             <div style="margin-bottom: 15px;">
-                <input type="text" id="p-name" class="sw-group" style="width:100%; border:1px solid #ddd;" value="投手A" onchange="syncPlayerInfo()" placeholder="投手名">
-                <div class="sw-group"><span>右投 / 左投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="syncPlayerInfo()"><span class="slider"></span></label></div>
+                <input type="text" id="p-name" class="sw-group" style="width:100%; border:1px solid #ddd;" value="投手A" onchange="updateUI()" placeholder="投手名">
+                <div class="sw-group"><span>右投 / 左投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="updateUI()"><span class="slider"></span></label></div>
                 
-                <input type="text" id="b-name" class="sw-group" style="width:100%; border:1px solid #ddd; margin-top:8px" value="打者A" onchange="syncPlayerInfo()" placeholder="打者名">
-                <div class="sw-group"><span>右打 / 左打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncPlayerInfo()"><span class="slider"></span></label></div>
+                <input type="text" id="b-name" class="sw-group" style="width:100%; border:1px solid #ddd; margin-top:8px" value="打者A" onchange="updateUI()" placeholder="打者名">
+                <div class="sw-group"><span>右打 / 左打</span><label class="switch"><input type="checkbox" id="b-side" onchange="updateUI()"><span class="slider"></span></label></div>
             </div>
 
-            <h4 style="margin: 10px 0 5px 0;">球種・表示設定</h4>
+            <h4>球種ボタン・表示設定</h4>
             <table class="pitch-table">
                 <thead><tr><th>球種</th><th>ボタン</th><th>マップ</th></tr></thead>
                 <tbody id="pitch-config-list"></tbody>
@@ -141,9 +118,9 @@
 
     <div id="report-modal" class="modal" onclick="closeModal(event, 'report-modal')">
         <div class="modal-content">
-            <h3>📸 レポート</h3>
-            <img id="report-img" style="width:100%; border:1px solid #ccc; border-radius:5px;">
-            <button class="btn-main" style="background:var(--success); width:100%; margin-top:10px" onclick="shareImg()">共有する</button>
+            <h3 style="margin:0">📸 投球レポート</h3>
+            <img id="report-img" style="width:100%; border:1px solid #ccc; border-radius:5px; margin:10px 0;">
+            <button class="btn-main" style="background:var(--success); width:100%" onclick="shareImg()">共有する</button>
             <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main" style="width:100%; margin-top:10px; background:#666;">閉じる</button>
         </div>
     </div>
@@ -158,16 +135,6 @@
             'フォーク': {btn: true, map: true}, 'チェンジ': {btn: true, map: true}, 'シュート': {btn: true, map: true},
             'シンカー': {btn: true, map: true}, 'カット': {btn: true, map: true}, 'ライズ': {btn: true, map: true}
         };
-
-        // 球速表示のリアルタイム更新
-        function updateSpeedDisp(val) {
-            document.getElementById('sp-val').innerText = val + " km/h";
-        }
-
-        function toggleSpeedUI() {
-            const isEnabled = document.getElementById('sp-enable').checked;
-            document.getElementById('sp-container').style.display = isEnabled ? 'flex' : 'none';
-        }
 
         function initSettings() {
             const list = document.getElementById('pitch-config-list');
@@ -193,6 +160,7 @@
             pitchLayout.forEach(item => {
                 const name = isL ? item.l : item.r;
                 const btn = document.createElement('button');
+                // 非表示(btn:false)の場合はクラスhiddenを付与して「消えるが場所は取る」状態にする
                 btn.className = `p-btn ${selectedPitch === name ? 'active' : ''} ${!config[name].btn ? 'hidden' : ''}`;
                 btn.innerHTML = `${item.a}<span>${name}</span>`;
                 btn.onclick = () => { selectedPitch = name; updateUI(); };
@@ -208,14 +176,10 @@
             const rect = wrap.getBoundingClientRect(); 
             const xVal = e.touches ? e.touches[0].clientX : e.clientX;
             const yVal = e.touches ? e.touches[0].clientY : e.clientY;
-            
             const x = Math.round(((xVal - rect.left) / rect.width) * 300);
             const y = Math.round(((yVal - rect.top) / rect.height) * 360);
             
-            // 確実にスライダーから現在の値を取得
-            const speedNow = document.getElementById('sp-enable').checked ? document.getElementById('sp-sld').value + " km/h" : "-";
-            
-            db.push({t: selectedPitch, x: x, y: y, s: speedNow});
+            db.push({t: selectedPitch, x: x, y: y});
             drawDots(); 
             refreshHistory();
         }
@@ -223,8 +187,7 @@
         wrap.addEventListener('mousedown', recordPitch);
 
         function drawDots() {
-            const ctx = document.getElementById('h-layer').getContext('2d'); 
-            ctx.clearRect(0,0,300,360);
+            const ctx = document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360);
             document.querySelectorAll('.dot').forEach(d => d.remove());
             db.forEach(p => {
                 if (config[p.t] && config[p.t].map) {
@@ -240,25 +203,20 @@
 
         function refreshHistory() {
             const body = document.getElementById('h-body');
-            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:20px; color:#999;">ゾーンを触って記録開始</td></tr>' : '';
+            body.innerHTML = db.length === 0 ? '<tr><td colspan="2" style="padding:20px; color:#999;">ゾーンをタッチして記録</td></tr>' : '';
             [...db].reverse().forEach((p, i) => {
                 const row = body.insertRow();
-                // 履歴は絶対に色をつけない
-                row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.s}</td>`;
+                row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td>`;
             });
         }
 
         function undoLast() { if(db.length > 0) { db.pop(); drawDots(); refreshHistory(); } }
-
-        function syncPlayerInfo() { updateUI(); }
-
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
-        function resetData() { if(confirm("全記録を消去しますか？")) { db = []; drawDots(); updateUI(); } }
+        function resetData() { if(confirm("全記録を消去？")) { db = []; drawDots(); updateUI(); } }
 
-        // レポート生成
         async function showReport() {
-            if(db.length === 0) return alert("記録なし");
+            if(db.length === 0) return;
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 800;
             ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
@@ -269,8 +227,8 @@
             db.forEach(p => { if (config[p.t].map) {
                 ctx.fillStyle = pitchColors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); 
             }}); ctx.restore();
-            ctx.fillStyle = "#333"; ctx.font = "bold 18px sans-serif"; ctx.fillText("【History】", 350, 140);
-            db.slice(-20).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t} (${p.s})`, 350, 170+(i*22)); });
+            ctx.fillStyle = "#333"; ctx.font = "bold 18px sans-serif"; ctx.fillText("【Pitching History】", 350, 140);
+            db.slice(-25).reverse().forEach((p,i) => { ctx.font = "16px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t}`, 350, 175+(i*22)); });
             document.getElementById('report-img').src = canvas.toDataURL();
             canvas.toBlob(b => reportBlob = b);
             openModal('report-modal');
@@ -281,7 +239,7 @@
             const file = new File([reportBlob], "report.png", { type: "image/png" });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({ files: [file], title: '投球レポート' });
-            } else { alert("画像を長押しして保存してください"); }
+            }
         }
 
         initSettings();
